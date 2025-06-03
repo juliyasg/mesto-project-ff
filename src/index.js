@@ -1,8 +1,8 @@
 import "./pages/index.css";
-import { initialCards } from "./components/cards.js";
-import { createCard, deleteCard, likeCard } from "./components/card.js";
+import { createCard } from "./components/card.js";
 import { openModal, closeModal, setPopupEventListeners } from "./components/modal.js";
 import { enableValidation, clearValidation } from './components/validation.js';
+import { getUserInfo, getInitialCards, updateProfile, addCardApi } from './components/api.js';
 
 
 const validationConfig = {
@@ -46,22 +46,26 @@ function openImagePopup(link, name) {
 
 function handleEditFormSubmit(evt) {
   evt.preventDefault();
-  profileName.textContent = nameInput.value;
-  profileDescription.textContent = jobInput.value;
-  closeModal(popupEditProfile);
+  updateProfile(nameInput.value, jobInput.value)
+    .then((userData) => {
+      profileName.textContent = userData.name;
+      profileDescription.textContent = userData.about;
+      closeModal(popupEditProfile);
+    })
+    .catch((err) => console.error('Ошибка при обновлении профиля:', err));
 }
 
 function handleNewCardFormSubmit(evt) {
   evt.preventDefault();
-  const newCardData = {
-    name: newCardNameInput.value,
-    link: newCardLinkInput.value
-  };
-  const newCard = createCard(newCardData, deleteCard, likeCard, openImagePopup);
-  cardsContainer.prepend(newCard);
-  newCardForm.reset();
-  clearValidation(newCardForm, validationConfig); // сбрасываем ошибки и кнопку
-  closeModal(popupNewCard);
+  addCardApi(newCardNameInput.value, newCardLinkInput.value)
+    .then((newCardData) => {
+      const newCard = createCard(newCardData, userId, openImagePopup); // передаем userId
+      cardsContainer.prepend(newCard);
+      newCardForm.reset();
+      clearValidation(newCardForm, validationConfig);
+      closeModal(popupNewCard);
+    })
+    .catch((err) => console.error('Ошибка при добавлении карточки:', err));
 }
 
 editButton.addEventListener('click', () => {
@@ -80,10 +84,22 @@ addButton.addEventListener('click', () => {
 editForm.addEventListener('submit', handleEditFormSubmit);
 newCardForm.addEventListener('submit', handleNewCardFormSubmit);
 
-initialCards.forEach((item) => {
-  const cardNew = createCard(item, deleteCard, likeCard, openImagePopup);
-  cardsContainer.append(cardNew);
-});
+let userId;
+
+// Получение данных пользователя и карточек с сервера
+Promise.all([getUserInfo(), getInitialCards()])
+  .then(([userData, cards]) => {
+    userId = userData._id; // сохраняем ID пользователя
+
+    profileName.textContent = userData.name;
+    profileDescription.textContent = userData.about;
+
+    cards.forEach((cardItem) => {
+      const cardElement = createCard(cardItem, userId, openImagePopup);
+      cardsContainer.append(cardElement);
+    });
+  })
+  .catch((err) => console.error('Ошибка загрузки данных:', err));
 
 setPopupEventListeners(popupEditProfile);
 setPopupEventListeners(popupNewCard);
