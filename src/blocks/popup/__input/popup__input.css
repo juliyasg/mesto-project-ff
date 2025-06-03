@@ -14,6 +14,25 @@
   margin-bottom: 0;
 }
 
+.popup__input:focus {
+  outline: none;
+}
+
+.popup__input_type_error {
+  border-bottom: 1px solid #FF0000;
+}
+
+.popup__input-error_visible {
+  color: #FF0000;
+  font-size: 12px;
+}
+
+.popup__button_disabled {
+  background: #f6f6f6;
+  border: 1px solid #c4c4c4;
+  color: #c4c4c4;
+}
+
 @media screen and (max-width: 568px) {
   .popup__title {
     font-size: 12px;
