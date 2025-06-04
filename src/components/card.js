@@ -10,7 +10,6 @@ function createCard(cardData, userId, handleCardClick) {
   const likeCounter = cardElement.querySelector('.card__like-count');
   const deleteButton = cardElement.querySelector('.card__delete-button');
 
-  // Установка содержимого
   cardImage.src = cardData.link;
   cardImage.alt = cardData.name;
   cardTitle.textContent = cardData.name;
@@ -27,12 +26,10 @@ function createCard(cardData, userId, handleCardClick) {
     deleteButton.remove();
   }
 
-  // Обработка клика по изображению
   cardImage.addEventListener('click', () => {
     handleCardClick(cardData.link, cardData.name);
   });
 
-  // Обработка лайка
   likeButton.addEventListener('click', () => {
     const liked = likeButton.classList.contains('card__like-button_is-active');
     const action = liked ? unlikeCardApi : likeCardApi;
@@ -46,7 +43,6 @@ function createCard(cardData, userId, handleCardClick) {
       .catch((err) => console.error(`Ошибка при ${liked ? 'удалении лайка' : 'установке лайка'}:`, err));
   });
 
-  // Обработка удаления карточки
   deleteButton.addEventListener('click', () => {
     deleteCardApi(cardData._id)
       .then(() => {
