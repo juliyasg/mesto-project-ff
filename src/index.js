@@ -2,8 +2,7 @@ import "./pages/index.css";
 import { createCard } from "./components/card.js";
 import { openModal, closeModal, setPopupEventListeners } from "./components/modal.js";
 import { enableValidation, clearValidation } from './components/validation.js';
-import { getUserInfo, getInitialCards, updateProfile, addCardApi } from './components/api.js';
-
+import { getUserInfo, getInitialCards, updateProfile, addCardApi, updateAvatarApi } from './components/api.js';
 
 const validationConfig = {
   formSelector: '.popup__form',
@@ -37,6 +36,35 @@ const newCardForm = popupNewCard.querySelector('.popup__form');
 const newCardNameInput = newCardForm.querySelector('.popup__input_type_card-name');
 const newCardLinkInput = newCardForm.querySelector('.popup__input_type_url');
 
+const popupAvatar = document.querySelector('.popup_type_avatar');
+const avatarForm = popupAvatar.querySelector('.popup__form');
+const avatarInput = avatarForm.querySelector('.popup__input_type_url');
+const profileImage = document.querySelector('.profile__image');
+
+profileImage.addEventListener('click', () => {
+  avatarForm.reset();
+  clearValidation(avatarForm, validationConfig);
+  openModal(popupAvatar);
+});
+
+function renderLoading(isLoading, buttonElement, defaultText = "Сохранить", loadingText = "Сохранение...") {
+  buttonElement.textContent = isLoading ? loadingText : defaultText;
+}
+
+function handleAvatarFormSubmit(evt) {
+  evt.preventDefault();
+  const button = evt.submitter;
+  renderLoading(true, button);
+
+  updateAvatarApi(avatarInput.value)
+    .then((userData) => {
+      profileImage.style.backgroundImage = `url('${userData.avatar}')`;
+      closeModal(popupAvatar);
+    })
+    .catch((err) => console.error('Ошибка при обновлении аватара:', err))
+    .finally(() => renderLoading(false, button));
+}
+
 function openImagePopup(link, name) {
   popupImg.src = link;
   popupImg.alt = name;
@@ -46,26 +74,34 @@ function openImagePopup(link, name) {
 
 function handleEditFormSubmit(evt) {
   evt.preventDefault();
+  const button = evt.submitter;
+  renderLoading(true, button);
+
   updateProfile(nameInput.value, jobInput.value)
     .then((userData) => {
       profileName.textContent = userData.name;
       profileDescription.textContent = userData.about;
       closeModal(popupEditProfile);
     })
-    .catch((err) => console.error('Ошибка при обновлении профиля:', err));
+    .catch((err) => console.error('Ошибка при обновлении профиля:', err))
+    .finally(() => renderLoading(false, button));
 }
 
 function handleNewCardFormSubmit(evt) {
   evt.preventDefault();
+  const button = evt.submitter;
+  renderLoading(true, button);
+
   addCardApi(newCardNameInput.value, newCardLinkInput.value)
     .then((newCardData) => {
-      const newCard = createCard(newCardData, userId, openImagePopup); // передаем userId
+      const newCard = createCard(newCardData, userId, openImagePopup);
       cardsContainer.prepend(newCard);
       newCardForm.reset();
       clearValidation(newCardForm, validationConfig);
       closeModal(popupNewCard);
     })
-    .catch((err) => console.error('Ошибка при добавлении карточки:', err));
+    .catch((err) => console.error('Ошибка при добавлении карточки:', err))
+    .finally(() => renderLoading(false, button));
 }
 
 editButton.addEventListener('click', () => {
@@ -83,16 +119,17 @@ addButton.addEventListener('click', () => {
 
 editForm.addEventListener('submit', handleEditFormSubmit);
 newCardForm.addEventListener('submit', handleNewCardFormSubmit);
+avatarForm.addEventListener('submit', handleAvatarFormSubmit);
 
 let userId;
 
-// Получение данных пользователя и карточек с сервера
 Promise.all([getUserInfo(), getInitialCards()])
   .then(([userData, cards]) => {
-    userId = userData._id; // сохраняем ID пользователя
+    userId = userData._id;
 
     profileName.textContent = userData.name;
     profileDescription.textContent = userData.about;
+    profileImage.style.backgroundImage = `url('${userData.avatar}')`;
 
     cards.forEach((cardItem) => {
       const cardElement = createCard(cardItem, userId, openImagePopup);
@@ -104,3 +141,4 @@ Promise.all([getUserInfo(), getInitialCards()])
 setPopupEventListeners(popupEditProfile);
 setPopupEventListeners(popupNewCard);
 setPopupEventListeners(popupImage);
+setPopupEventListeners(popupAvatar);

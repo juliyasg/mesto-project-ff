@@ -29,7 +29,7 @@ function createCard(cardData, userId, handleCardClick) {
 
   // Обработка клика по изображению
   cardImage.addEventListener('click', () => {
-    handleCardClick(cardData.name, cardData.link);
+    handleCardClick(cardData.link, cardData.name);
   });
 
   // Обработка лайка
